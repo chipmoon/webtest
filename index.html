@@ -3,134 +3,325 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Excel Data Matcher - Web App</title>
+    <title>Excel Data Matcher - Enterprise Web App</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #0078d4;
+            --secondary-color: #106ebe;
+            --success-color: #107c10;
+            --warning-color: #ff8c00;
+            --error-color: #e81123;
+            --bg-gradient: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+        }
+        
         body { 
-            padding: 20px; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 0;
+            margin: 0;
+            background: var(--bg-gradient);
             min-height: 100vh;
         }
+        
+        .header {
+            background: rgba(255,255,255,0.95);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin: 0;
+        }
+        
         .container { 
-            max-width: 1200px; 
+            max-width: 1400px; 
             background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            margin-bottom: 40px;
         }
-        .file-input-group {
-            margin: 20px 0;
-            padding: 20px;
-            border: 2px dashed #667eea;
-            border-radius: 10px;
+        
+        .file-input-section {
             background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+            transition: all 0.3s ease;
         }
+        
+        .file-input-section:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(0,120,212,0.1);
+        }
+        
+        .file-input-section label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .file-input-section label i {
+            margin-right: 8px;
+            color: var(--primary-color);
+        }
+        
+        .form-control {
+            border-radius: 4px;
+            border: 1px solid #d1d1d1;
+            padding: 10px;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0,120,212,0.1);
+        }
+        
+        .config-section {
+            background: #f0f8ff;
+            border-left: 4px solid var(--primary-color);
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+        
+        .btn-process {
+            background: var(--bg-gradient);
+            border: none;
+            color: white;
+            padding: 15px 50px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,120,212,0.3);
+        }
+        
+        .btn-process:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,120,212,0.4);
+            color: white;
+        }
+        
+        .btn-process:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
         #output {
             background: #1e1e1e;
             color: #d4d4d4;
-            padding: 20px;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
+            padding: 25px;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-size: 13px;
+            line-height: 1.6;
             max-height: 600px;
             overflow-y: auto;
             white-space: pre-wrap;
             word-wrap: break-word;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
         }
-        .success { color: #4ade80; }
-        .error { color: #f87171; }
-        .info { color: #60a5fa; }
-        .warning { color: #fbbf24; }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            padding: 12px 30px;
-            font-weight: bold;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-        #loading {
+        
+        .log-success { color: #4ade80; font-weight: 500; }
+        .log-error { color: #f87171; font-weight: 500; }
+        .log-info { color: #60a5fa; }
+        .log-warning { color: #fbbf24; }
+        .log-header { color: #a78bfa; font-weight: 600; }
+        
+        #loadingOverlay {
             display: none;
-            text-align: center;
-            margin: 20px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
         }
-        .spinner-border {
-            width: 3rem;
-            height: 3rem;
+        
+        #loadingOverlay.active {
+            display: flex;
+        }
+        
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .stats-card h5 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .stats-card .value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+        
+        .help-text {
+            color: #6c757d;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        
+        .badge-version {
+            background: var(--primary-color);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
+    <div class="header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1><i class="fas fa-atom"></i> Excel Data Matcher</h1>
+                    <p class="mb-0 text-muted">Semiconductor Manufacturing Data Analysis Platform</p>
+                </div>
+                <span class="badge-version">v4.2 Enterprise</span>
+            </div>
+        </div>
+    </div>
+    
     <div class="container">
-        <h1 class="text-center mb-4">🔬 Excel Data Matcher</h1>
-        <p class="text-center text-muted">Semiconductor Manufacturing Data Analysis Tool v4.2</p>
-        
-        <div class="file-input-group">
-            <label class="form-label"><strong>📊 Summary File (CSV/Excel)</strong></label>
+        <div class="file-input-section">
+            <label><i class="fas fa-file-csv"></i> Summary File (CatBoost Predictions)</label>
             <input type="file" class="form-control" id="summaryFile" accept=".csv,.xlsx,.xls" required>
-            <small class="text-muted">Upload your CatBoost predictions file containing True_Hardness column</small>
+            <div class="help-text">
+                <i class="fas fa-info-circle"></i> Upload CSV or Excel file containing 'True_Hardness' column
+            </div>
         </div>
 
-        <div class="file-input-group">
-            <label class="form-label"><strong>📁 Data Files (CSV/Excel - Multiple)</strong></label>
+        <div class="file-input-section">
+            <label><i class="fas fa-folder-open"></i> Data Files (Nanoindentation Data - Multiple Files)</label>
             <input type="file" class="form-control" id="dataFiles" accept=".csv,.xlsx,.xls" multiple required>
-            <small class="text-muted">Upload files containing H(GPa) and Er(GPa) columns</small>
-        </div>
-
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <label class="form-label">Divisor (True_Hardness ÷ ?)</label>
-                <input type="number" class="form-control" id="divisor" value="102" step="0.1">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Tolerance (%)</label>
-                <input type="number" class="form-control" id="tolerance" value="0.05" step="0.01">
+            <div class="help-text">
+                <i class="fas fa-info-circle"></i> Upload multiple files containing 'H(GPa)' and 'Er(GPa)' columns
             </div>
         </div>
 
-        <div class="text-center">
-            <button class="btn btn-primary btn-lg" onclick="processFiles()">
-                🚀 Process & Match Data
+        <div class="config-section">
+            <h5 class="mb-3"><i class="fas fa-cog"></i> Configuration Parameters</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">Divisor (True_Hardness ÷ ?)</label>
+                    <input type="number" class="form-control" id="divisor" value="102" step="0.1" min="1">
+                    <div class="help-text">Conversion factor to GPa scale</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Tolerance (%)</label>
+                    <input type="number" class="form-control" id="tolerance" value="0.05" step="0.01" min="0.01" max="10">
+                    <div class="help-text">Matching tolerance percentage</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Match Strategy</label>
+                    <select class="form-control" id="matchStrategy">
+                        <option value="best" selected>Best Match Only</option>
+                        <option value="all">All Matches</option>
+                    </select>
+                    <div class="help-text">Keep best or all matches per record</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center my-4">
+            <button class="btn btn-process" id="processBtn" onclick="processFiles()">
+                <i class="fas fa-rocket"></i> Process & Match Data
             </button>
         </div>
 
-        <div id="loading">
-            <div class="spinner-border text-primary" role="status"></div>
-            <p class="mt-2">Processing... Please wait</p>
-        </div>
+        <div id="output" class="mt-4" style="display:none;"></div>
+    </div>
 
-        <div id="output" class="mt-4"></div>
+    <div id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h4>Processing Data...</h4>
+            <p id="loadingStatus">Initializing Python environment</p>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
     <script>
-        let pyodide;
+        let pyodide = null;
         let outputDiv = document.getElementById('output');
+        let loadingOverlay = document.getElementById('loadingOverlay');
+        let loadingStatus = document.getElementById('loadingStatus');
+        let processBtn = document.getElementById('processBtn');
 
         function log(message, type = 'info') {
+            outputDiv.style.display = 'block';
             const span = document.createElement('span');
-            span.className = type;
+            span.className = `log-${type}`;
             span.textContent = message + '\n';
             outputDiv.appendChild(span);
             outputDiv.scrollTop = outputDiv.scrollHeight;
         }
 
+        function updateLoadingStatus(message) {
+            loadingStatus.textContent = message;
+        }
+
         async function initPyodide() {
             if (pyodide) return;
             
-            log('🔧 Initializing Python environment...', 'info');
-            pyodide = await loadPyodide();
+            updateLoadingStatus('Loading Pyodide...');
+            pyodide = await loadPyodide({
+                indexURL: "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/"
+            });
             
-            log('📦 Installing dependencies (pandas, openpyxl)...', 'info');
+            updateLoadingStatus('Installing pandas...');
             await pyodide.loadPackage(['pandas', 'micropip']);
+            
+            updateLoadingStatus('Installing additional packages...');
             await pyodide.runPythonAsync(`
                 import micropip
                 await micropip.install(['openpyxl', 'numpy'])
             `);
             
-            log('✅ Python environment ready!', 'success');
+            log('✅ Python environment initialized successfully', 'success');
         }
 
         async function processFiles() {
@@ -138,40 +329,55 @@
             const dataFiles = document.getElementById('dataFiles').files;
             const divisor = parseFloat(document.getElementById('divisor').value);
             const tolerance = parseFloat(document.getElementById('tolerance').value);
+            const bestMatchOnly = document.getElementById('matchStrategy').value === 'best';
 
-            if (!summaryFile || dataFiles.length === 0) {
-                alert('Please upload both summary file and data files!');
+            if (!summaryFile) {
+                alert('❌ Please upload summary file!');
                 return;
             }
 
+            if (dataFiles.length === 0) {
+                alert('❌ Please upload at least one data file!');
+                return;
+            }
+
+            // Clear previous output
             outputDiv.innerHTML = '';
-            document.getElementById('loading').style.display = 'block';
+            outputDiv.style.display = 'block';
+            loadingOverlay.classList.add('active');
+            processBtn.disabled = true;
 
             try {
                 await initPyodide();
 
                 // Upload summary file
-                log(`📤 Uploading summary file: ${summaryFile.name}`, 'info');
+                updateLoadingStatus('Uploading summary file...');
+                log(`📤 Uploading: ${summaryFile.name}`, 'info');
                 const summaryData = await summaryFile.arrayBuffer();
-                pyodide.FS.writeFile('summary_file', new Uint8Array(summaryData));
+                const summaryExt = summaryFile.name.split('.').pop().toLowerCase();
+                const summaryFilename = `summary.${summaryExt}`;
+                pyodide.FS.writeFile(summaryFilename, new Uint8Array(summaryData));
 
                 // Upload data files
                 const dataFilenames = [];
                 for (let i = 0; i < dataFiles.length; i++) {
                     const file = dataFiles[i];
-                    log(`📤 Uploading data file ${i+1}: ${file.name}`, 'info');
+                    updateLoadingStatus(`Uploading data file ${i+1}/${dataFiles.length}...`);
+                    log(`📤 Uploading: ${file.name}`, 'info');
                     const data = await file.arrayBuffer();
-                    const filename = `data_file_${i}`;
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    const filename = `data_${i}.${ext}`;
                     pyodide.FS.writeFile(filename, new Uint8Array(data));
                     dataFilenames.push(filename);
                 }
 
-                log('\n' + '='.repeat(80), 'info');
-                log('🔥 STARTING DATA MATCHING PROCESS', 'success');
-                log('='.repeat(80) + '\n', 'info');
+                updateLoadingStatus('Processing data...');
+                log('\n' + '='.repeat(80), 'header');
+                log('🚀 STARTING DATA MATCHING PROCESS', 'success');
+                log('='.repeat(80) + '\n', 'header');
 
-                // **FIX: Actually call the matching logic!**
-                const result = await pyodide.runPythonAsync(`
+                // Execute the EXACT Python core logic
+                const pythonCode = `
 import pandas as pd
 import numpy as np
 import io
@@ -180,20 +386,15 @@ import warnings
 from pathlib import Path
 warnings.filterwarnings('ignore')
 
-# ===== EMBED YOUR CORE LOGIC HERE =====
-${getCorePythonCode()}
+${getPythonCoreCode()}
 
-# ===== MAIN EXECUTION =====
-def web_main():
+# Web-specific main function
+def web_main(summary_file, data_files, divisor, tolerance_percent, best_match_only):
     print("=" * 80)
     print("  ENTERPRISE DATA MATCHER V4.2 - WEB VERSION")
-    print("  True_Hardness ÷ ${divisor} → Match H(GPa) → Extract Er(GPa)")
+    print(f"  True_Hardness ÷ {divisor} → Match H(GPa) → Extract Er(GPa)")
     print("=" * 80)
     print()
-    
-    # Configuration
-    summary_file = 'summary_file'
-    data_files = ${JSON.stringify(dataFilenames)}
     
     matcher = ExcelDataMatcher(
         summary_file=summary_file,
@@ -201,33 +402,84 @@ def web_main():
         match_column='H(GPa)',
         extract_column='Er(GPa)',
         summary_source_column='True_Hardness',
-        divisor=${divisor},
-        tolerance_percent=${tolerance},
+        divisor=divisor,
+        tolerance_percent=tolerance_percent,
         additional_columns=['Contact_Depth', 'Load'],
-        best_match_only=True
+        best_match_only=best_match_only
     )
     
-    # Execute pipeline
-    matcher.load_data(parallel=False)
-    result_df = matcher.match_data()
+    try:
+        matcher.load_data(parallel=False)
+        result_df = matcher.match_data()
+        
+        # Save to BytesIO instead of file
+        output_bytes = io.BytesIO()
+        with pd.ExcelWriter(output_bytes, engine='openpyxl') as writer:
+            # Sheet 1: Full_Data
+            result_df.to_excel(writer, sheet_name='Full_Data', index=False)
+            
+            # Sheet 2: Summary with filtered columns
+            summary_df = matcher.create_summary_sheet(result_df)
+            if not summary_df.empty:
+                summary_df.to_excel(writer, sheet_name='Summary', index=False)
+            
+            # Format columns (same as desktop version)
+            from openpyxl.utils import get_column_letter
+            
+            # Format Full_Data sheet
+            if 'Full_Data' in writer.sheets:
+                worksheet = writer.sheets['Full_Data']
+                for idx, column in enumerate(result_df.columns, 1):
+                    max_length = len(str(column))
+                    column_data = result_df[column].astype(str)
+                    max_length = max(max_length, column_data.str.len().max())
+                    adjusted_width = min(max_length + 3, 50)
+                    col_letter = get_column_letter(idx)
+                    worksheet.column_dimensions[col_letter].width = adjusted_width
+            
+            # Format Summary sheet
+            if 'Summary' in writer.sheets and not summary_df.empty:
+                worksheet = writer.sheets['Summary']
+                for idx, column in enumerate(summary_df.columns, 1):
+                    max_length = len(str(column))
+                    column_data = summary_df[column].astype(str)
+                    max_length = max(max_length, column_data.str.len().max())
+                    adjusted_width = min(max_length + 3, 50)
+                    col_letter = get_column_letter(idx)
+                    worksheet.column_dimensions[col_letter].width = adjusted_width
+        
+        output_bytes.seek(0)
+        
+        print("\\n" + "=" * 80)
+        print("✓ PROCESSING COMPLETE")
+        print(f"  Full results: {len(result_df)} total rows")
+        print(f"  Sheets: 'Full_Data' (all columns), 'Summary' (essential columns)")
+        print("=" * 80)
+        
+        return output_bytes.getvalue()
     
-    # Save to memory
-    output_bytes = io.BytesIO()
-    with pd.ExcelWriter(output_bytes, engine='openpyxl') as writer:
-        result_df.to_excel(writer, sheet_name='Full_Data', index=False)
-        summary_df = matcher.create_summary_sheet(result_df)
-        if not summary_df.empty:
-            summary_df.to_excel(writer, sheet_name='Summary', index=False)
-    
-    output_bytes.seek(0)
-    return output_bytes.getvalue()
+    except Exception as e:
+        print(f"\\n❌ Error during processing: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
 
-# Run and return result
-result = web_main()
+# Execute
+result = web_main(
+    summary_file='${summaryFilename}',
+    data_files=${JSON.stringify(dataFilenames)},
+    divisor=${divisor},
+    tolerance_percent=${tolerance},
+    best_match_only=${bestMatchOnly}
+)
 result
-                `);
+`;
 
-                log('\n✅ Processing complete!', 'success');
+                // Run Python code
+                const result = await pyodide.runPythonAsync(pythonCode);
+
+                updateLoadingStatus('Preparing download...');
+                log('\n✅ Processing completed successfully!', 'success');
                 log('📥 Downloading result file...', 'info');
 
                 // Download the result
@@ -238,24 +490,31 @@ result
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = `matched_results_${new Date().getTime()}.xlsx`;
+                document.body.appendChild(a);
                 a.click();
+                document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
-                log('✅ Download initiated!', 'success');
-                log('📊 Check the "Summary" tab for essential columns', 'info');
+                log('\n✅ File downloaded successfully!', 'success');
+                log('📊 Open the Excel file and check:', 'info');
+                log('  • Full_Data sheet: Complete results with all columns', 'info');
+                log('  • Summary sheet: Essential columns (X, Y, True_Hardness, H, Er)', 'info');
 
             } catch (error) {
                 log(`\n❌ Error: ${error.message}`, 'error');
-                console.error(error);
+                console.error('Full error:', error);
+                alert('❌ Processing failed. Check console for details.');
             } finally {
-                document.getElementById('loading').style.display = 'none';
+                loadingOverlay.classList.remove('active');
+                processBtn.disabled = false;
             }
         }
 
-        function getCorePythonCode() {
-            // Return the complete core logic as a string
+        function getPythonCoreCode() {
+            // Return the EXACT core logic from excel_matcher_final.py
             return `
 def normalize_column_name(col_name):
+    """Normalize column name for fuzzy matching."""
     if pd.isna(col_name):
         return ""
     normalized = str(col_name).strip().lower()
@@ -263,20 +522,24 @@ def normalize_column_name(col_name):
     return normalized
 
 def find_column_fuzzy(df, target_names, show_available=False):
+    """Find column using fuzzy matching."""
     if show_available:
         print(f"  Available columns: {list(df.columns)}")
     
     normalized_targets = [normalize_column_name(name) for name in target_names]
     
+    # Try exact match first
     for col in df.columns:
         if col in target_names:
             return col
     
+    # Try normalized match
     for col in df.columns:
         normalized_col = normalize_column_name(col)
         if normalized_col in normalized_targets:
             return col
     
+    # Try partial match
     for col in df.columns:
         normalized_col = normalize_column_name(col)
         for target in normalized_targets:
@@ -286,9 +549,10 @@ def find_column_fuzzy(df, target_names, show_available=False):
     return None
 
 def detect_header_row(file_path, max_rows_to_check=10):
+    """Detect the actual header row in Excel/CSV files."""
     file_extension = Path(file_path).suffix.lower()
     
-    if file_extension == '.csv' or not file_extension:
+    if file_extension == '.csv' or file_extension == '':
         preview = pd.read_csv(file_path, nrows=max_rows_to_check, header=None)
     else:
         preview = pd.read_excel(file_path, nrows=max_rows_to_check, header=None, engine='openpyxl')
@@ -304,7 +568,7 @@ def detect_header_row(file_path, max_rows_to_check=10):
             max_text_count = text_count
             best_header_row = idx
     
-    if file_extension == '.csv' or not file_extension:
+    if file_extension == '.csv' or file_extension == '':
         df = pd.read_csv(file_path, header=best_header_row)
     else:
         df = pd.read_excel(file_path, header=best_header_row, engine='openpyxl')
@@ -315,6 +579,7 @@ def detect_header_row(file_path, max_rows_to_check=10):
     return df, best_header_row
 
 def read_file_auto(file_path):
+    """Automatically detect and read CSV or Excel files with header detection."""
     try:
         df, header_row = detect_header_row(file_path)
         if header_row > 0:
@@ -323,13 +588,15 @@ def read_file_auto(file_path):
     except Exception as e:
         print(f"  ⚠️ Error reading file: {e}")
         file_extension = Path(file_path).suffix.lower()
-        if file_extension == '.csv' or not file_extension:
+        if file_extension == '.csv' or file_extension == '':
             return pd.read_csv(file_path)
         else:
             return pd.read_excel(file_path, engine='openpyxl')
 
 class ExcelDataMatcher:
-    def __init__(self, summary_file, data_files, match_column='H(GPa)', 
+    """Enterprise-grade data matcher with robust header detection."""
+    
+    def __init__(self, summary_file, data_files, match_column='H(GPa)',
                  extract_column='Er(GPa)', summary_source_column='True_Hardness',
                  divisor=102.0, tolerance_percent=2.0, additional_columns=None,
                  best_match_only=True):
@@ -347,60 +614,95 @@ class ExcelDataMatcher:
         
         self.match_column_variants = [
             match_column, match_column.lower(), match_column.replace('(', ' ('),
-            match_column.replace(')', ') '), 'h(gpa)', 'h (gpa)', 'H', 'H(GPa)'
+            match_column.replace(')', ') '), 'h(gpa)', 'h (gpa)', 'h ( gpa )', 
+            'hardness(gpa)', 'H', 'H(GPa)', 'H (GPa)'
         ]
         
         self.extract_column_variants = [
             extract_column, extract_column.lower(), extract_column.replace('(', ' ('),
-            extract_column.replace(')', ') '), 'er(gpa)', 'er (gpa)', 'Er', 'Er(GPa)'
+            extract_column.replace(')', ') '), 'er(gpa)', 'er (gpa)', 'er ( gpa )', 
+            'reduced modulus(gpa)', 'Er', 'Er(GPa)', 'Er (GPa)'
         ]
     
     def load_data(self, parallel=False):
+        """Load CSV/Excel files with robust header detection."""
         print(f"📊 Loading summary file...")
         self.summary_df = read_file_auto(self.summary_file)
         print(f"  Summary shape: {self.summary_df.shape}")
+        print(f"  Summary columns: {list(self.summary_df.columns)}")
         
         summary_col = find_column_fuzzy(self.summary_df,
                                        [self.summary_source_column, 
                                         self.summary_source_column.lower(),
-                                        'true_hardness'])
+                                        'true_hardness', 'true hardness'],
+                                       show_available=False)
         
         if summary_col is None:
-            raise ValueError(f"Column '{self.summary_source_column}' not found!")
+            raise ValueError(f"Column '{self.summary_source_column}' not found in summary file!\\n"
+                           f"Available columns: {list(self.summary_df.columns)}")
         
-        self.summary_source_column = summary_col
+        if summary_col != self.summary_source_column:
+            print(f"  ℹ️ Using column '{summary_col}' as '{self.summary_source_column}'")
+            self.summary_source_column = summary_col
+        
         self.summary_df[self.summary_source_column] = pd.to_numeric(
             self.summary_df[self.summary_source_column], errors='coerce')
         
         self.summary_df['_transformed_value'] = self.summary_df[self.summary_source_column] / self.divisor
+        print(f"  ✓ Source column: '{self.summary_source_column}'")
+        print(f"  Sample values: {self.summary_df[self.summary_source_column].head(3).tolist()}")
         print(f"  ✓ Transformed (÷{self.divisor}): {self.summary_df['_transformed_value'].head(3).tolist()}")
         
         print(f"\\n📁 Loading {len(self.data_files)} data files...")
         for idx, file_path in enumerate(self.data_files, 1):
-            file_key = f"file_{idx}"
-            print(f"  {idx}. Loading...")
+            file_key = Path(file_path).stem
+            print(f"  {idx}. {Path(file_path).name}")
             try:
                 df = read_file_auto(file_path)
                 self.data_dfs[file_key] = df
                 print(f"    Shape: {df.shape}")
+                
+                match_col = find_column_fuzzy(df, self.match_column_variants)
+                extract_col = find_column_fuzzy(df, self.extract_column_variants)
+                
+                if match_col:
+                    print(f"    ✓ Found match column: '{match_col}'")
+                else:
+                    print(f"    ⚠️ Match column '{self.match_column}' not found")
+                
+                if extract_col:
+                    print(f"    ✓ Found extract column: '{extract_col}'")
+                else:
+                    print(f"    ⚠️ Extract column '{self.extract_column}' not found")
+                    
             except Exception as e:
-                print(f"    ❌ Error: {e}")
+                print(f"    ❌ Error loading file: {e}")
     
     def match_data(self):
-        print(f"\\n⚡ Matching data...")
-        print(f"  Strategy: {self.summary_source_column} ÷ {self.divisor} → {self.match_column} → {self.extract_column}")
+        """Perform relative percentage-based matching with fuzzy column detection."""
+        print(f"\\n⚡ Matching data with relative tolerance...")
+        print(f"  Strategy: {self.summary_source_column} ÷ {self.divisor} → Match {self.match_column} → Extract {self.extract_column}")
         print(f"  Tolerance: ±{self.tolerance_percent}%")
+        print(f"  Best match only: {self.best_match_only}")
         
         all_matches = []
+        
+        # Build consolidated data from all files
         consolidated_data = []
+        skipped_files = []
         
         for file_key, df in self.data_dfs.items():
-            match_col = find_column_fuzzy(df, self.match_column_variants)
+            match_col = find_column_fuzzy(df, self.match_column_variants, show_available=False)
             if match_col is None:
+                skipped_files.append(f"{file_key} (no '{self.match_column}' column)")
                 continue
             
             match_values = pd.to_numeric(df[match_col], errors='coerce')
             valid_mask = match_values.notna()
+            
+            if valid_mask.sum() == 0:
+                skipped_files.append(f"{file_key} (no valid numeric values in '{match_col}')")
+                continue
             
             extract_col = find_column_fuzzy(df, self.extract_column_variants)
             if extract_col:
@@ -408,25 +710,50 @@ class ExcelDataMatcher:
             else:
                 extract_values = pd.Series([None] * len(df))
             
+            additional_data = {}
+            for col in self.additional_columns:
+                col_found = find_column_fuzzy(df, [col, col.lower(), col.replace('_', ' ')])
+                if col_found:
+                    additional_data[col] = df[col_found]
+                else:
+                    additional_data[col] = pd.Series([None] * len(df))
+            
             for idx in df.index[valid_mask]:
                 entry = {
                     'file_source': file_key,
                     'match_value': match_values.iloc[idx],
                     'extract_value': extract_values.iloc[idx] if extract_col else None,
                 }
+                for col in self.additional_columns:
+                    entry[col] = additional_data[col].iloc[idx] if col in additional_data else None
                 consolidated_data.append(entry)
+            
+            print(f"  ✓ {file_key}: {valid_mask.sum()} valid data points from column '{match_col}'")
+        
+        if skipped_files:
+            print(f"\\n  ⚠️ Skipped files:")
+            for skip_msg in skipped_files:
+                print(f"    - {skip_msg}")
         
         if not consolidated_data:
-            print("\\n❌ No valid data found!")
+            print(f"\\n❌ No valid data found in any files for matching!")
             result_df = self.summary_df.copy()
             result_df['match_found'] = False
             return result_df
         
         consolidated_df = pd.DataFrame(consolidated_data)
-        print(f"\\n  ✓ Consolidated {len(consolidated_df)} data points")
+        print(f"\\n  ✓ Consolidated {len(consolidated_df)} data points from all files")
+        print(f"  Match column range: [{consolidated_df['match_value'].min():.4f}, {consolidated_df['match_value'].max():.4f}]")
+        
+        # Match each summary row
+        transformed_values = self.summary_df['_transformed_value'].values
+        total_rows = len(self.summary_df)
+        print(f"\\n🎯 Matching {total_rows} summary records...")
         
         matched_count = 0
-        for idx, target_value in enumerate(self.summary_df['_transformed_value'].values):
+        multiple_matches_count = 0
+        
+        for idx, target_value in enumerate(transformed_values):
             if pd.isna(target_value):
                 continue
             
@@ -442,32 +769,120 @@ class ExcelDataMatcher:
                 continue
             
             matches['relative_error'] = abs(matches['match_value'] - target_value) / target_value * 100
+            matches['absolute_error'] = abs(matches['match_value'] - target_value)
             matches = matches.sort_values('relative_error')
             
-            best_match = matches.iloc[0]
-            match_record = self.summary_df.iloc[idx].to_dict()
-            match_record['matched_source_file'] = best_match['file_source']
-            match_record[f'matched_{self.match_column}_value'] = best_match['match_value']
-            match_record[f'extracted_{self.extract_column}_value'] = best_match['extract_value']
-            match_record['relative_error_percent'] = best_match['relative_error']
-            match_record['match_found'] = True
-            
-            all_matches.append(match_record)
-            matched_count += 1
+            if self.best_match_only:
+                best_match = matches.iloc[0]
+                match_record = self.summary_df.iloc[idx].to_dict()
+                match_record['matched_source_file'] = best_match['file_source']
+                match_record[f'matched_{self.match_column}_value'] = best_match['match_value']
+                match_record[f'extracted_{self.extract_column}_value'] = best_match['extract_value']
+                match_record['relative_error_percent'] = best_match['relative_error']
+                match_record['absolute_error'] = best_match['absolute_error']
+                match_record['match_found'] = True
+                match_record['num_candidates'] = len(matches)
+                
+                for col in self.additional_columns:
+                    match_record[f'matched_{col}'] = best_match.get(col)
+                
+                all_matches.append(match_record)
+                matched_count += 1
+                
+                if len(matches) > 1:
+                    multiple_matches_count += 1
+            else:
+                for _, match_row in matches.iterrows():
+                    match_record = self.summary_df.iloc[idx].to_dict()
+                    match_record['matched_source_file'] = match_row['file_source']
+                    match_record[f'matched_{self.match_column}_value'] = match_row['match_value']
+                    match_record[f'extracted_{self.extract_column}_value'] = match_row['extract_value']
+                    match_record['relative_error_percent'] = match_row['relative_error']
+                    match_record['absolute_error'] = match_row['absolute_error']
+                    match_record['match_found'] = True
+                    
+                    for col in self.additional_columns:
+                        match_record[f'matched_{col}'] = match_row.get(col)
+                    
+                    all_matches.append(match_record)
+                
+                matched_count += 1
+                if len(matches) > 1:
+                    multiple_matches_count += 1
         
+        # Create result dataframe
         if all_matches:
             result_df = pd.DataFrame(all_matches)
         else:
             result_df = self.summary_df.copy()
             result_df['match_found'] = False
         
-        match_rate = (matched_count / len(self.summary_df) * 100) if len(self.summary_df) > 0 else 0
-        print(f"\\n✓ Matched: {matched_count} ({match_rate:.1f}%)")
+        # Add unmatched rows if best_match_only - CRITICAL FOR PRESERVING ALL ROWS
+        if self.best_match_only and all_matches:
+            matched_indices = set([rec['X'] if 'X' in rec else i for i, rec in enumerate(all_matches)])
+            unmatched_rows = []
+            
+            for i in range(len(self.summary_df)):
+                summary_row = self.summary_df.iloc[i]
+                row_id = summary_row.get('X', i)
+                
+                # Check if this row was matched
+                is_matched = any(
+                    match_rec.get('X', -1) == row_id if 'X' in match_rec else False
+                    for match_rec in all_matches
+                )
+                
+                if not is_matched:
+                    unmatched_record = summary_row.to_dict()
+                    unmatched_record['match_found'] = False
+                    # Add placeholder columns
+                    unmatched_record['matched_source_file'] = None
+                    unmatched_record[f'matched_{self.match_column}_value'] = None
+                    unmatched_record[f'extracted_{self.extract_column}_value'] = None
+                    unmatched_record['relative_error_percent'] = None
+                    unmatched_record['absolute_error'] = None
+                    unmatched_record['num_candidates'] = 0
+                    for col in self.additional_columns:
+                        unmatched_record[f'matched_{col}'] = None
+                    unmatched_rows.append(unmatched_record)
+            
+            if unmatched_rows:
+                unmatched_df = pd.DataFrame(unmatched_rows)
+                result_df = pd.concat([result_df, unmatched_df], ignore_index=True)
+        
+        # Statistics
+        match_rate = (matched_count / total_rows * 100) if total_rows > 0 else 0
+        
+        print(f"\\n✓ Matching completed")
+        print(f"\\n📈 Match Statistics:")
+        print(f"  Total records: {total_rows}")
+        print(f"  Matched: {matched_count} ({match_rate:.1f}%)")
+        print(f"  Unmatched: {total_rows - matched_count} ({100 - match_rate:.1f}%)")
+        
+        if matched_count > 0:
+            print(f"  Records with multiple candidates: {multiple_matches_count}")
+        
+        if 'relative_error_percent' in result_df.columns:
+            matched_data = result_df[result_df['match_found'] == True]
+            if len(matched_data) > 0:
+                avg_error = matched_data['relative_error_percent'].mean()
+                max_error = matched_data['relative_error_percent'].max()
+                print(f"\\n📊 Match Quality:")
+                print(f"  Average relative error: {avg_error:.3f}%")
+                print(f"  Maximum relative error: {max_error:.3f}%")
+        
+        if 'matched_source_file' in result_df.columns:
+            print(f"\\n📂 Match Distribution:")
+            file_counts = result_df[result_df['match_found'] == True]['matched_source_file'].value_counts()
+            for file_name, count in file_counts.items():
+                pct = (count / matched_count * 100) if matched_count > 0 else 0
+                print(f"  {file_name}: {count} matches ({pct:.1f}%)")
         
         return result_df
     
     def create_summary_sheet(self, result_df):
-        print(f"\\n📋 Creating summary sheet...")
+        """Create a filtered summary sheet with essential columns only."""
+        print(f"\\n📋 Creating filtered summary sheet...")
         
         column_mapping = {
             'X': 'X',
@@ -485,14 +900,19 @@ class ExcelDataMatcher:
             if orig_col in result_df.columns:
                 available_cols.append(orig_col)
                 rename_dict[orig_col] = new_col
+            else:
+                print(f"  ℹ️ Column '{orig_col}' not found, skipping")
         
         if not available_cols:
+            print(f"  ⚠️ No matching columns found for summary sheet")
             return pd.DataFrame()
         
         summary_df = result_df[available_cols].copy()
         summary_df = summary_df.rename(columns=rename_dict)
         
-        print(f"  ✓ Summary sheet created with {len(summary_df)} rows")
+        print(f"  ✓ Summary sheet created with {len(summary_df)} rows and {len(summary_df.columns)} columns")
+        print(f"  Columns: {list(summary_df.columns)}")
+        
         return summary_df
 `;
         }
